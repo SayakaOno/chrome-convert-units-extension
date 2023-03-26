@@ -1,29 +1,64 @@
-import React, { ChangeEvent } from "react";
-import "./App.css";
-import Box from "@mui/material/Box";
-import FormControl from "@mui/material/FormControl";
+import React, { ChangeEvent, useEffect, useMemo } from "react";
 import { SelectChangeEvent } from "@mui/material/Select";
 import TextField from "@mui/material/TextField";
-import OutlinedInput from "@mui/material/OutlinedInput";
-import InputAdornment from "@mui/material/InputAdornment";
 import Autocomplete from "@mui/material/Autocomplete";
-
-const units = ["mm", "cm", "m"];
+import { getUnitSet, isValidUnit, convert } from "./utils";
+import { allUnits, Unit } from "./constants";
+import "./App.css";
 
 function App() {
   const [value, setValue] = React.useState("");
-  const [unit, setUnit] = React.useState("");
+  const [unit, setUnit] = React.useState<Unit | "">("");
+  const [unitSet, setUnitSet] = React.useState<Unit[]>([]);
+
+  useEffect(() => {
+    const newUnitSet = getUnitSet(unit);
+    setUnitSet(newUnitSet || []);
+  }, [unit]);
 
   const handleChange = (
-    event: SelectChangeEvent | ChangeEvent<HTMLTextAreaElement | HTMLInputElement>,
+    event: SelectChangeEvent | ChangeEvent<HTMLTextAreaElement | HTMLInputElement> | any,
     set: (value: string) => void,
   ) => {
     set(event.target.value as string);
   };
 
+  const handleTextFieldChange = (
+    event: SelectChangeEvent | ChangeEvent<HTMLTextAreaElement | HTMLInputElement> | any,
+  ) => {
+    if (isValidUnit(event.target.value)) {
+      setUnit(event.target.value);
+    }
+  };
+
+  const convertedValues = useMemo(() => {
+    if (!value || !unit || !unitSet.length || !unitSet.includes(unit)) {
+      return null;
+    }
+
+    return (
+      <ul>
+        {unitSet.map((item) => {
+          if (item !== unit) {
+            return (
+              <li style={{ marginBottom: 5 }}>
+                <span style={{ paddingRight: 10 }}>
+                  {convert(+value)
+                    .from(unit as Unit)
+                    .to(item as Unit)}
+                </span>
+                <span>{item}</span>
+              </li>
+            );
+          }
+        })}
+      </ul>
+    );
+  }, [value, unit, unitSet]);
+
   return (
-    <div style={{ display: "flex" }}>
-      <div>
+    <div style={{ padding: 10 }}>
+      <div style={{ display: "flex", marginBottom: 10 }}>
         <TextField
           label="Value"
           id="outlined-size-small"
@@ -32,33 +67,22 @@ function App() {
           value={value}
           onChange={(e) => handleChange(e, setValue)}
         />
-      </div>
-      <Box sx={{ width: 100, marginRight: "10px" }}>
         <Autocomplete
           disablePortal
           id="combo-box-demo"
           size="small"
+          options={allUnits}
+          sx={{ width: 200 }}
           value={unit}
-          options={units}
-          sx={{ width: 100 }}
+          onChange={(event: React.SyntheticEvent<Element, Event>, newValue: string | null) => {
+            setUnit((newValue as Unit) || "");
+          }}
           renderInput={(params) => (
-            <TextField {...params} label="Unit" onChange={(e) => handleChange(e, setUnit)} />
+            <TextField {...params} label="Unit" onChange={handleTextFieldChange} />
           )}
         />
-      </Box>
-      <FormControl variant="outlined">
-        <OutlinedInput
-          id="outlined-adornment-weight"
-          size="small"
-          disabled
-          endAdornment={<InputAdornment position="end">kg</InputAdornment>}
-          aria-describedby="outlined-weight-helper-text"
-          inputProps={{
-            "aria-label": "weight",
-          }}
-          style={{ width: 100 }}
-        />
-      </FormControl>
+      </div>
+      {convertedValues}
     </div>
   );
 }
