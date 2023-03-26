@@ -37,11 +37,11 @@ function App() {
     }
 
     return (
-      <ul>
+      <ul style={{ marginBottom: 0 }}>
         {unitSet.map((item) => {
           if (item !== unit) {
             return (
-              <li style={{ marginBottom: 5 }}>
+              <li style={{ marginBottom: 10 }}>
                 <span style={{ paddingRight: 10 }}>
                   {convert(+value)
                     .from(unit as Unit)
@@ -58,7 +58,7 @@ function App() {
 
   return (
     <div style={{ padding: 10 }}>
-      <div style={{ display: "flex", marginBottom: 10 }}>
+      <div style={{ display: "flex" }}>
         <TextField
           label="Value"
           id="outlined-size-small"
